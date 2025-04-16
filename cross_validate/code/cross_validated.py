@@ -1,10 +1,11 @@
 import json
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedShuffleSplit
+# from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from pygam import LinearGAM
 from tqdm import tqdm
-
+from typing import Tuple
 def load_data(jsonl_path):
     details = []
     with open(jsonl_path, 'r') as f:
@@ -12,7 +13,17 @@ def load_data(jsonl_path):
             data = json.loads(line)
             details.append([int(x) for x in data['detail']])
     return np.array(details)
+def train_test_split(X: np.ndarray, y: np.ndarray, test_size: float = 0.1, random_state: int = 42
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
 
+    # 将连续的 y 离散化用于 stratification
+    percentiles = np.percentile(y, np.linspace(0, 100, 11))  # 分10组
+    y_strata = np.digitize(y, percentiles[1:-1], right=True)
+
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=test_size, random_state=random_state)
+    train_idx, val_idx = next(sss.split(X, y_strata))
+
+    return X[train_idx], X[val_idx], y[train_idx], y[val_idx]
 def evaluate_subset(score_matrix, sampled_indices):
     sub_scores = score_matrix[:, sampled_indices]
     sub_total_scores = sub_scores.sum(axis=1)
@@ -44,6 +55,8 @@ def run_cross_validated_subsampling(jsonl_path, k_values=[100, 200, 500, 1000], 
             if rmse < best_rmse:
                 best_rmse = rmse
                 best_indices = sampled_indices.tolist()
+        print(f"Best RMSE for k={k}: {best_rmse:.4f}")
+
 
         best_records.append({
             "k": k,
@@ -66,4 +79,5 @@ def run_cross_validated_subsampling(jsonl_path, k_values=[100, 200, 500, 1000], 
     print(f"\n✅ 结果已保存到 {output_file}")
 
 if __name__ == "__main__":
-    run_cross_validated_subsampling("../data/discarded_items.jsonl")
+    k_value = [k for k in range(50,501,50)]
+    run_cross_validated_subsampling("../data/discarded_items.jsonl", k_values=k_value, n_trials=10000, output_file="../data/best_subsets.jsonl")
