@@ -1,0 +1,1 @@
+py-irt train 2pl /net/scratch/eval_pj/irt/train_data/gsm8k_train_data.jsonl /net/scratch/eval_pj/irt/results/ --lr 0.02 --hidden 10000000000 --epochs 100000 --device cuda
