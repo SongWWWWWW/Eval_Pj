@@ -20,7 +20,8 @@ def train_test_split(X: np.ndarray, y: np.ndarray, test_size: float = 0.1, rando
     percentiles = np.percentile(y, np.linspace(0, 100, 11))  # 分10组
     y_strata = np.digitize(y, percentiles[1:-1], right=True)
 
-    sss = StratifiedShuffleSplit(n_splits=1, test_size=test_size, random_state=random_state)
+    # NOTE not use random
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=test_size)
     train_idx, val_idx = next(sss.split(X, y_strata))
 
     return X[train_idx], X[val_idx], y[train_idx], y[val_idx]
@@ -30,7 +31,7 @@ def evaluate_subset(score_matrix, sampled_indices):
     total_scores = score_matrix.sum(axis=1)
 
     X_train, X_val, y_train, y_val = train_test_split(
-        sub_total_scores.reshape(-1, 1), total_scores, test_size=0.2, random_state=42
+        sub_total_scores.reshape(-1, 1), total_scores, test_size=0.1, random_state=42
     )
 
     gam = LinearGAM().fit(X_train, y_train)

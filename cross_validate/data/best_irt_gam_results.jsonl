@@ -1,0 +1,3 @@
+{"model_type": "2PL", "rmse": 19.37353930887405, "spearman": 0.9965500502759335, "best_trial": 421}
+{"model_type": "3PL", "rmse": 19.40648215531098, "spearman": 0.9963291707910071, "best_trial": 385}
+{"model_type": "4PL", "rmse": 18.947208569569433, "spearman": 0.9966592142466901, "best_trial": 496}
