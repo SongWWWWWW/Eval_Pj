@@ -26,7 +26,7 @@ def train_test_split(X: np.ndarray, y: np.ndarray, test_size: float = 0.1, rando
     return X[train_idx], X[val_idx], y[train_idx], y[val_idx]
 
 # 计算IRT模型的能力值（Ability）
-def calculate_ability(score_matrix: np.ndarray, model_type='2PL',temp_path="../temp"):
+def calculate_ability(score_matrix: np.ndarray, model_type='2PL'):
     """
     使用IRT模型（2PL、3PL、4PL）计算每个受试者的能力值
     """
@@ -49,7 +49,7 @@ def calculate_ability(score_matrix: np.ndarray, model_type='2PL',temp_path="../t
     return abilities
 
 # 评估子集
-def evaluate_subset(score_matrix, sampled_indices, abilities, model_type='2PL',temp_path="../temp"):
+def evaluate_subset(score_matrix, sampled_indices, abilities, model_type='2PL'):
     sub_scores = score_matrix[:, sampled_indices]
     sub_total_scores = sub_scores.sum(axis=1)
     total_scores = score_matrix.sum(axis=1)
@@ -57,7 +57,8 @@ def evaluate_subset(score_matrix, sampled_indices, abilities, model_type='2PL',t
     if model_type != 'GAM':
         # 使用IRT模型计算能力值
         if abilities is None:
-            abilities = calculate_ability(score_matrix, model_type=model_type,temp_path=temp_path)
+            # NOTE will be destroied
+            abilities = calculate_ability(score_matrix, model_type=model_type)
 
         # 将能力值与子得分结合
         X_train, X_val, y_train, y_val = train_test_split(
@@ -76,7 +77,7 @@ def evaluate_subset(score_matrix, sampled_indices, abilities, model_type='2PL',t
     return rmse
 
 # 交叉验证子集
-def run_cross_validated_subsampling(score_path, ability,k_values=[100, 200, 500, 1000], n_trials=10000, output_file="best_subsets.jsonl", model_type='2PL',temp_path="../temp"):
+def run_cross_validated_subsampling(score_path, ability,k_values=[100, 200, 500, 1000], n_trials=10000, output_file="best_subsets.jsonl", model_type='2PL'):
     score_matrix = load_data(score_path)
     n_items = score_matrix.shape[1]
 
@@ -89,7 +90,7 @@ def run_cross_validated_subsampling(score_path, ability,k_values=[100, 200, 500,
 
         for _ in tqdm(range(n_trials)):
             sampled_indices = np.random.choice(n_items, size=k, replace=False)
-            rmse = evaluate_subset(score_matrix,  sampled_indices,ability, model_type=model_type,temp_path=temp_path)
+            rmse = evaluate_subset(score_matrix,  sampled_indices,ability, model_type=model_type)
             if rmse < best_rmse:
                 best_rmse = rmse
                 best_indices = sampled_indices.tolist()
@@ -121,7 +122,6 @@ def parse_args():
     parser.add_argument('--n_trials', type=int, required=False, default=10000, help="Number of trials to run for each k value.")
     parser.add_argument('--output_file', type=str, default="best_subsets.jsonl", help="Output file to save the best subsets.")
     parser.add_argument('--model_type', type=str, choices=['2pl', '3pl', '4pl', 'GAM'], default='2PL', help="IRT model type or 'GAM' for GAM model only.")
-    parser.add_argument('--temp_path',type=str)
     parser.add_argument('--parameters_path',type=str)
     return parser.parse_args()
 
@@ -140,7 +140,6 @@ if __name__ == "__main__":
         n_trials=args.n_trials,
         output_file=args.output_file,
         model_type=args.model_type,
-        temp_path = args.temp_path
     )
 
 
